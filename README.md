@@ -76,11 +76,16 @@ git push
 
 ```bash
 cd ~/taishanpi-rk3566-server
-git pull
-sudo ./deploy/install.sh
-sudo systemctl restart nginx
-sudo systemctl restart filemgr
+sudo ./deploy/update.sh
 ```
+
+`deploy/update.sh` 会自动执行：
+
+- `git pull --ff-only`
+- 重新运行 `deploy/install.sh`
+- 重启 `nginx`
+- 重启 `filemgr`
+- 重启 `eth0-direct`
 
 ## 不要提交到 GitHub 的内容
 

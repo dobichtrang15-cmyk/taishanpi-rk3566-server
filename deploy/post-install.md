@@ -301,3 +301,29 @@ Cloudflare tunnel token
 - token
 - 私钥
 - 真实用户数据
+
+## 14. 后续更新方式
+
+如果开发板已经完成首装，后续不需要再手打一长串命令。
+
+直接在开发板仓库目录执行：
+
+```bash
+cd ~/taishanpi-rk3566-server
+sudo ./deploy/update.sh
+```
+
+这条命令会自动完成：
+
+- `git pull --ff-only`
+- 重新部署网页和后端
+- 重启 `nginx`
+- 重启 `filemgr`
+- 重启 `eth0-direct`
+
+更新后建议检查：
+
+```bash
+sudo systemctl status nginx --no-pager
+sudo systemctl status filemgr --no-pager
+```
