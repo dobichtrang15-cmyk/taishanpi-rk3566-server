@@ -1,0 +1,11 @@
+{
+  "workstation": {
+    "name": "我的电脑",
+    "host": "192.168.50.2",
+    "ssh_port": 22,
+    "ssh_user": "woladmin",
+    "mac": "00:00:00:00:00:00",
+    "broadcast": "192.168.50.255",
+    "shutdown_command": "shutdown /s /f /t 0"
+  }
+}

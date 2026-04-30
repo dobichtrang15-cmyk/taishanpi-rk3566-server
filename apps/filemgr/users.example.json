@@ -1,0 +1,15 @@
+{
+  "admin": {
+    "password_hash": "replace-this-on-device",
+    "role": "admin",
+    "permissions": [
+      "list",
+      "download",
+      "upload",
+      "mkdir",
+      "delete",
+      "device_control",
+      "manage_users"
+    ]
+  }
+}

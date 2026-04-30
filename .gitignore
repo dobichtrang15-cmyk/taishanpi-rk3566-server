@@ -1,0 +1,28 @@
+# Runtime data
+files/
+data/
+
+# Local secrets and generated config
+*.key
+*.pem
+*.crt
+*.token
+*.log
+.env
+
+# Real runtime configs; keep examples instead
+apps/filemgr/devices.json
+apps/filemgr/users.json
+cloudflared/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

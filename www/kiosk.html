@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Server OS - Bento Pro</title>
+  <style>
+    :root {
+      --bg-color: #f2f2f7;
+      --card-bg: #ffffff;
+      --text-main: #1c1c1e;
+      --text-muted: #8e8e93;
+      --border-color: rgba(0, 0, 0, 0.04);
+      --btn-orange: #fff4e5;
+      --btn-red: #ffe9e8;
+      --btn-blue: #e5f1ff;
+      --btn-gray: #f2f2f7;
+      --accent-blue: #007aff;
+      --accent-green: #34c759;
+      --accent-orange: #ff9500;
+      --accent-red: #ff3b30;
+      --radius-lg: 32px;
+      --radius-md: 20px;
+      --radius-sm: 12px;
+      --fit-scale: 0.82;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "SF Pro Display", "SF Pro Text", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-color);
+      color: var(--text-main);
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button {
+      border: 0;
+      font: inherit;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .stage {
+      width: 1060px;
+      height: 580px;
+      transform: scale(var(--fit-scale));
+      transform-origin: center center;
+      flex: 0 0 auto;
+    }
+
+    .bento-container {
+      width: 1060px;
+      height: 580px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: 180px;
+      gap: 20px;
+    }
+
+    .bento-box {
+      min-width: 0;
+      min-height: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.02);
+      overflow: hidden;
+    }
+
+    .span-2-col { grid-column: span 2; }
+    .span-2-row { grid-row: span 2; }
+
+    .box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: auto;
+    }
+
+    .box-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .box-icon svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+      fill: currentColor;
+    }
+
+    .box-title {
+      margin-bottom: 8px;
+      color: var(--text-muted);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .box-value {
+      color: var(--text-main);
+      font-size: 26px;
+      line-height: 1.08;
+      font-weight: 750;
+      letter-spacing: 0;
+      word-break: break-word;
+    }
+
+    .live-state {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 12px var(--accent-green);
+    }
+
+    .live-dot.warn {
+      background: var(--accent-orange);
+      box-shadow: 0 0 12px var(--accent-orange);
+    }
+
+    .live-dot.bad {
+      background: var(--accent-red);
+      box-shadow: 0 0 12px var(--accent-red);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .status-dot.ok {
+      background: var(--accent-green);
+      box-shadow: 0 0 10px rgba(52, 199, 89, 0.55);
+    }
+
+    .status-dot.bad {
+      background: var(--accent-red);
+      box-shadow: 0 0 10px rgba(255, 59, 48, 0.5);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      font-family: Consolas, "SF Mono", monospace;
+      white-space: nowrap;
+    }
+
+    .list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .list-item {
+      min-height: 45px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-color);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .list-item span:first-child {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .btn-bento {
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 18px;
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+
+    .btn-bento:active {
+      transform: scale(0.94);
+      filter: brightness(0.92);
+    }
+
+    .btn-bento.confirming {
+      outline: 3px solid currentColor;
+      outline-offset: -5px;
+      filter: saturate(1.18);
+    }
+
+    .btn-icon {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .btn-label {
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+
+    .storage-row {
+      display: flex;
+      gap: 30px;
+      margin-top: auto;
+    }
+
+    .storage-label {
+      margin-bottom: 4px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .storage-value {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      z-index: 20;
+      max-width: min(520px, calc(100vw - 32px));
+      padding: 12px 16px;
+      border-radius: 16px;
+      background: rgba(28, 28, 30, 0.92);
+      color: #fff;
+      font-size: 14px;
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true" focusable="false">
+    <symbol id="i-cpu" viewBox="0 0 256 256">
+      <path d="M184 40h-8V24a8 8 0 0 0-16 0v16h-24V24a8 8 0 0 0-16 0v16H96V24a8 8 0 0 0-16 0v16h-8a32 32 0 0 0-32 32v8H24a8 8 0 0 0 0 16h16v24H24a8 8 0 0 0 0 16h16v24H24a8 8 0 0 0 0 16h16v8a32 32 0 0 0 32 32h8v16a8 8 0 0 0 16 0v-16h24v16a8 8 0 0 0 16 0v-16h24v16a8 8 0 0 0 16 0v-16h8a32 32 0 0 0 32-32v-8h16a8 8 0 0 0 0-16h-16v-24h16a8 8 0 0 0 0-16h-16V96h16a8 8 0 0 0 0-16h-16v-8a32 32 0 0 0-32-32Zm16 144a16 16 0 0 1-16 16H72a16 16 0 0 1-16-16V72a16 16 0 0 1 16-16h112a16 16 0 0 1 16 16Zm-40-88H96a8 8 0 0 0-8 8v48a8 8 0 0 0 8 8h64a8 8 0 0 0 8-8v-48a8 8 0 0 0-8-8Zm-8 48h-48v-32h48Z"/>
+    </symbol>
+    <symbol id="i-globe" viewBox="0 0 256 256">
+      <path d="M128 24a104 104 0 1 0 104 104A104.11 104.11 0 0 0 128 24Zm87.63 96h-39.7a160.44 160.44 0 0 0-14.31-64.19A88.34 88.34 0 0 1 215.63 120ZM128 40c10.27 0 24.59 29.53 31.7 80H96.3C103.41 69.53 117.73 40 128 40ZM40 128a88.16 88.16 0 0 1 .37-8h39.7a160.44 160.44 0 0 0 14.31 64.19A88.34 88.34 0 0 1 40 128Zm16.37 8h39.7a160.44 160.44 0 0 0 14.31 64.19A88.34 88.34 0 0 1 56.37 136ZM128 216c-10.27 0-24.59-29.53-31.7-80h63.4c-7.11 50.47-21.43 80-31.7 80Zm34.38-15.81A160.44 160.44 0 0 0 176.69 136h39.7a88.34 88.34 0 0 1-54.01 64.19ZM176.69 120a160.44 160.44 0 0 0-14.31-64.19A88.34 88.34 0 0 1 216.39 120ZM94.38 55.81A160.44 160.44 0 0 0 80.07 120h-39.7a88.34 88.34 0 0 1 54.01-64.19Z"/>
+    </symbol>
+    <symbol id="i-plug" viewBox="0 0 256 256">
+      <path d="M237.66 18.34a8 8 0 0 0-11.32 0L184 60.69 163.31 40 205.66-2.34a8 8 0 0 0-11.32-11.32L152 28.69l-17.66-17.66a8 8 0 0 0-11.31 11.31l17.66 17.66-70.35 70.35A64 64 0 0 0 64 192h-8a8 8 0 0 0 0 16h24v24a8 8 0 0 0 16 0v-8a64 64 0 0 0 81.65-6.34L248 147.31l17.66 17.66A8 8 0 0 0 277 153.66L259.31 136l42.35-42.34a8 8 0 0 0-11.32-11.32L248 124.69 227.31 104l42.35-42.34a8 8 0 0 0-11.32-11.32L216 92.69 195.31 72l42.35-42.34a8 8 0 0 0 0-11.32Z" transform="scale(.86) translate(-18 18)"/>
+    </symbol>
+    <symbol id="i-rocket" viewBox="0 0 256 256">
+      <path d="M228.24 27.76c-20.28-20.28-73.54 1.4-118.76 46.63a194.18 194.18 0 0 0-24.25 29.87L52.69 96A16 16 0 0 0 37.13 100L9.37 127.72a8 8 0 0 0 3.65 13.47l43.36 10.84 47.59 47.59 10.84 43.36a8 8 0 0 0 13.47 3.65L156 218.87A16 16 0 0 0 160 203.31l-8.26-32.54a194.18 194.18 0 0 0 29.87-24.25c45.22-45.22 66.91-98.48 46.63-118.76ZM124.68 87.07c31.87-31.86 69.61-50.2 87.7-43.45 6.75 18.09-11.59 55.83-43.45 87.7a177.61 177.61 0 0 1-31.64 25.22L99.46 118.71a177.61 177.61 0 0 1 25.22-31.64ZM52 112.4l21.68 5.42a193.8 193.8 0 0 0-13.1 24.31L31.72 134.9Zm69.1 112-7.23-28.89a193.8 193.8 0 0 0 24.31-13.1L143.6 204Zm36.66-64.08a178.54 178.54 0 0 1-35.88 22.34l-48.54-48.54a178.54 178.54 0 0 1 22.34-35.88l62.08 62.08ZM160 80a16 16 0 1 1 16 16 16 16 0 0 1-16-16Z"/>
+    </symbol>
+    <symbol id="i-hard-drive" viewBox="0 0 256 256">
+      <path d="M232 160v40a24 24 0 0 1-24 24H48a24 24 0 0 1-24-24v-40a8.4 8.4 0 0 1 .57-2.94l32-88A24 24 0 0 1 79.1 56h97.8a24 24 0 0 1 22.53 15.06l32 88A8.4 8.4 0 0 1 232 160ZM71.6 76.53 44.92 152h166.16L184.4 76.53A8 8 0 0 0 176.9 72H79.1a8 8 0 0 0-7.5 4.53ZM216 168H40v32a8 8 0 0 0 8 8h160a8 8 0 0 0 8-8Zm-24 20a12 12 0 1 1-12-12 12 12 0 0 1 12 12Z"/>
+    </symbol>
+  </svg>
+  <div class="stage">
+    <div class="bento-container">
+      <section class="bento-box span-2-col" style="justify-content:center;">
+        <div class="box-header">
+          <div class="box-icon" style="background:rgba(0,0,0,0.05);"><svg><use href="#i-cpu"></use></svg></div>
+          <div class="live-state"><span id="live-dot" class="live-dot"></span><span id="server-status">Online</span></div>
+        </div>
+        <div class="box-value" style="font-size:40px;margin-top:10px;">DevBoard<br>Server</div>
+      </section>
+
+      <section class="bento-box">
+        <div class="box-header">
+          <div class="box-icon" style="background:var(--btn-blue);color:var(--accent-blue);"><svg><use href="#i-globe"></use></svg></div>
+          <span id="nginx-check" class="status-dot"></span>
+        </div>
+        <div class="box-title" style="margin-top:auto;">wlan0 / Tunnel</div>
+        <div id="network-value" class="box-value" style="font-size:19px;">127.0.0.1</div>
+      </section>
+
+      <section class="bento-box">
+        <div class="box-header">
+          <div class="box-icon" style="background:#f2e8ff;color:#8a2be2;"><svg><use href="#i-plug"></use></svg></div>
+          <span id="device-check" class="status-dot"></span>
+        </div>
+        <div class="box-title" style="margin-top:auto;">eth0 / Direct</div>
+        <div id="direct-value" class="box-value" style="font-size:19px;">192.168.50.1</div>
+      </section>
+
+      <section class="bento-box span-2-col span-2-row">
+        <div class="box-header">
+          <div class="box-icon" style="background:var(--btn-orange);color:var(--accent-orange);"><svg><use href="#i-rocket"></use></svg></div>
+          <span class="tag" style="background:var(--bg-color);">Stack v1.2</span>
+        </div>
+        <div style="margin-top:20px;">
+          <div class="box-title">Web Architecture</div>
+          <div class="box-value" style="font-size:24px;">Nginx Gateway</div>
+        </div>
+        <div class="list-container">
+          <div class="list-item">
+            <span>Frontend</span>
+            <span class="tag" style="background:#fff;">Port 80</span>
+          </div>
+          <div class="list-item">
+            <span>Flask API</span>
+            <span id="api-state" class="tag" style="background:var(--bg-color);">CHECK</span>
+          </div>
+          <div class="list-item">
+            <span>Browser UI</span>
+            <span class="tag" style="background:rgba(0,0,0,0.05);">LOCAL</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="bento-box span-2-col" style="background:transparent;border:none;padding:0;box-shadow:none;">
+        <div class="control-grid">
+          <button id="wake-btn" class="btn-bento" style="background:var(--btn-orange);color:var(--accent-orange);" type="button">
+            <span class="btn-icon">WOL</span>
+            <span class="btn-label">WOL 唤醒</span>
+          </button>
+          <button id="shutdown-btn" class="btn-bento" style="background:var(--btn-red);color:var(--accent-red);" type="button">
+            <span class="btn-icon">PWR</span>
+            <span class="btn-label">SSH 关机</span>
+          </button>
+          <button id="refresh-btn" class="btn-bento" style="background:var(--btn-gray);color:var(--text-main);" type="button">
+            <span class="btn-icon">REF</span>
+            <span class="btn-label">刷新状态</span>
+          </button>
+          <button id="sync-btn" class="btn-bento" style="background:var(--btn-blue);color:var(--accent-blue);" type="button">
+            <span class="btn-icon">SYN</span>
+            <span class="btn-label">同步状态</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="bento-box span-2-col">
+        <div class="box-header">
+          <div style="display:flex;gap:12px;align-items:center;min-width:0;">
+            <div class="box-icon" style="background:rgba(52,199,89,0.1);color:var(--accent-green);"><svg><use href="#i-hard-drive"></use></svg></div>
+            <div class="box-title" style="margin:0;">Storage Sync</div>
+          </div>
+          <span class="tag" style="background:var(--bg-color);">/userdata/files</span>
+        </div>
+        <div class="storage-row">
+          <div>
+            <div class="storage-label">Syncthing</div>
+            <div id="sync-state" class="storage-value">检测中</div>
+          </div>
+          <div>
+            <div class="storage-label">Workstation</div>
+            <div id="pc-state" class="storage-value">未知</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const API_BASE = location.protocol === "file:" ? "http://127.0.0.1" : "";
+    const DESIGN_WIDTH = 1060;
+    const DESIGN_HEIGHT = 580;
+    const pendingConfirm = new Map();
+
+    const $ = (id) => document.getElementById(id);
+
+    function fitStage() {
+      const margin = 16;
+      const scale = Math.min(
+        1,
+        (window.innerWidth - margin) / DESIGN_WIDTH,
+        (window.innerHeight - margin) / DESIGN_HEIGHT
+      );
+      document.documentElement.style.setProperty("--fit-scale", String(Math.max(0.45, scale)));
+    }
+
+    function toast(message) {
+      const el = $("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => el.classList.remove("show"), 2400);
+    }
+
+    function requireSecondTap(button, key, label, timeout = 3600) {
+      const now = Date.now();
+      const pending = pendingConfirm.get(key);
+      if (pending && now < pending.expiresAt) {
+        clearTimeout(pending.timer);
+        pendingConfirm.delete(key);
+        button.classList.remove("confirming");
+        return true;
+      }
+
+      button.classList.add("confirming");
+      toast(`再次点击确认${label}`);
+      const timer = setTimeout(() => {
+        pendingConfirm.delete(key);
+        button.classList.remove("confirming");
+      }, timeout);
+      pendingConfirm.set(key, { expiresAt: now + timeout, timer });
+      return false;
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(`${API_BASE}${path}`, {
+        cache: "no-store",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options
+      });
+      const contentType = response.headers.get("content-type") || "";
+      const payload = contentType.includes("application/json") ? await response.json() : await response.text();
+      if (!response.ok) {
+        const message = payload && typeof payload === "object" && payload.error ? payload.error : `请求失败 ${response.status}`;
+        throw new Error(message);
+      }
+      return payload;
+    }
+
+    function setTag(el, text, tone = "gray") {
+      el.textContent = text;
+      if (tone === "green") {
+        el.style.background = "var(--accent-green)";
+        el.style.color = "#fff";
+      } else if (tone === "red") {
+        el.style.background = "var(--accent-red)";
+        el.style.color = "#fff";
+      } else {
+        el.style.background = "var(--bg-color)";
+        el.style.color = "var(--text-main)";
+      }
+    }
+
+    function setDot(el, tone = "gray") {
+      el.classList.remove("ok", "bad");
+      if (tone === "green") el.classList.add("ok");
+      if (tone === "red") el.classList.add("bad");
+    }
+
+    function readOnlineStatus(data) {
+      if (!data || typeof data !== "object") return null;
+      for (const key of ["online", "oline", "ssh_online", "reachable", "is_online", "connected"]) {
+        if (typeof data[key] === "boolean") return data[key];
+      }
+      for (const key of ["data", "device", "workstation", "result"]) {
+        const nested = readOnlineStatus(data[key]);
+        if (nested !== null) return nested;
+      }
+      const status = String(data.status || data.state || "").toLowerCase();
+      if (["online", "up", "ok", "reachable", "connected", "running"].includes(status)) return true;
+      if (["offline", "down", "failed", "unreachable", "disconnected", "stopped"].includes(status)) return false;
+      const text = JSON.stringify(data);
+      if (["在线", "可达", "成功", "SSH在线"].some((token) => text.includes(token))) return true;
+      if (["离线", "不可达", "失败", "SSH离线"].some((token) => text.includes(token))) return false;
+      return typeof data.ok === "boolean" ? data.ok : null;
+    }
+
+    function getDeviceHost(device, status) {
+      return device?.host || device?.ip || device?.hostname || device?.ssh_host ||
+        status?.host || status?.ip || status?.hostname || status?.ssh_host || "未配置";
+    }
+
+    function getDevicePort(device, status) {
+      return device?.ssh_port || device?.port || status?.ssh_port || status?.port || 22;
+    }
+
+    function setServerState(text, tone = "good") {
+      const dot = $("live-dot");
+      dot.classList.remove("warn", "bad");
+      if (tone === "warn") dot.classList.add("warn");
+      if (tone === "bad") dot.classList.add("bad");
+      $("server-status").textContent = text;
+    }
+
+    async function loadDevice() {
+      try {
+        const [device, status] = await Promise.all([
+          api("/api/device/workstation"),
+          api("/api/device/workstation/status")
+        ]);
+        const online = readOnlineStatus(status);
+        const host = getDeviceHost(device, status);
+        const port = getDevicePort(device, status);
+        $("pc-state").textContent = online === true ? "在线" : online === false ? "离线" : "未知";
+        $("direct-value").textContent = host === "未配置" ? "192.168.50.1" : host;
+        setDot($("device-check"), online === true ? "green" : online === false ? "red" : "gray");
+        setServerState(online === false ? "Workstation Offline" : "Online", online === false ? "warn" : "good");
+      } catch (error) {
+        $("pc-state").textContent = "读取失败";
+        setDot($("device-check"), "red");
+        setServerState("API Error", "bad");
+      }
+    }
+
+    async function loadApiState() {
+      try {
+        await api("/api/device/workstation/status");
+        setTag($("api-state"), "ACTIVE", "green");
+        setDot($("nginx-check"), "green");
+      } catch {
+        setTag($("api-state"), "ERROR", "red");
+        setDot($("nginx-check"), "red");
+      }
+    }
+
+    async function loadSync() {
+      try {
+        const data = await api("/api/syncthing/status");
+        $("sync-state").textContent = typeof data === "object" ? (data.status || data.state || "已读取") : String(data);
+      } catch {
+        $("sync-state").textContent = "读取失败";
+      }
+    }
+
+    async function refreshAll(showMessage = false) {
+      await Promise.allSettled([loadApiState(), loadDevice(), loadSync()]);
+      if (showMessage) toast("状态已刷新");
+    }
+
+    async function wakePc() {
+      if (!requireSecondTap($("wake-btn"), "wake", "唤醒电脑")) return;
+      try {
+        await api("/api/device/workstation/wake", { method: "POST", body: "{}" });
+        toast("唤醒命令已发送");
+        setTimeout(loadDevice, 1200);
+      } catch (error) {
+        toast(error.message);
+      }
+    }
+
+    async function shutdownPc() {
+      if (!requireSecondTap($("shutdown-btn"), "shutdown", "关闭电脑")) return;
+      try {
+        await api("/api/device/workstation/shutdown", { method: "POST", body: "{}" });
+        toast("关机命令已发送");
+        setTimeout(loadDevice, 1200);
+      } catch (error) {
+        toast(error.message);
+      }
+    }
+
+    window.addEventListener("resize", fitStage);
+    $("wake-btn").addEventListener("click", wakePc);
+    $("shutdown-btn").addEventListener("click", shutdownPc);
+    $("refresh-btn").addEventListener("click", () => refreshAll(true));
+    $("sync-btn").addEventListener("click", async () => {
+      await loadSync();
+      toast("同步状态已刷新");
+    });
+
+    fitStage();
+    refreshAll();
+    setInterval(refreshAll, 15000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+[Unit]
+Description=Configure eth0 direct link for workstation WOL
+After=network-pre.target
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/sbin/ip link set eth0 up
+ExecStart=/sbin/ip addr flush dev eth0
+ExecStart=/sbin/ip addr add 192.168.50.1/24 dev eth0
+
+[Install]
+WantedBy=multi-user.target
