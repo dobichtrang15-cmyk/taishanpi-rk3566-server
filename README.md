@@ -41,6 +41,12 @@ sudo reboot
 - 固定 `eth0 = 192.168.50.1/24`
 - 安装 HDMI kiosk 脚本并配置自启动
 
+安装完成后，继续按清单补设备私有配置：
+
+```text
+deploy/post-install.md
+```
+
 ## 仓库上传到 GitHub
 
 首次上传：
