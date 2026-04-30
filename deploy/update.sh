@@ -17,7 +17,7 @@ echo "Updating repository..."
 git -C "$REPO_ROOT" pull --ff-only
 
 echo "Reinstalling project files..."
-"$REPO_ROOT/deploy/install.sh"
+bash "$REPO_ROOT/deploy/install.sh"
 
 echo "Restarting services..."
 systemctl restart nginx

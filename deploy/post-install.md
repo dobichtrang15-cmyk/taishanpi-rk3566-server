@@ -310,7 +310,7 @@ Cloudflare tunnel token
 
 ```bash
 cd ~/taishanpi-rk3566-server
-sudo ./deploy/update.sh
+sudo bash ./deploy/update.sh
 ```
 
 这条命令会自动完成：
@@ -327,3 +327,42 @@ sudo ./deploy/update.sh
 sudo systemctl status nginx --no-pager
 sudo systemctl status filemgr --no-pager
 ```
+
+## 15. 备份当前板子的私有配置
+
+建议在系统稳定后做一次备份，尤其是在：
+
+- 已经配置好用户和权限
+- 已经配置好设备控制
+- 已经配置好 Cloudflare
+- 已经配置好 Syncthing
+
+执行：
+
+```bash
+cd ~/taishanpi-rk3566-server
+sudo bash ./deploy/backup.sh
+```
+
+默认会生成：
+
+```text
+/userdata/backup/taishanpi-config-backup-时间戳.tar.gz
+```
+
+备份内容包括：
+
+- `users.json`
+- `devices.json`
+- Nginx 当前站点配置
+- `filemgr.service`
+- `eth0-direct.service`
+- `filemgr-syncthing` sudo 规则
+- Syncthing 配置
+- Cloudflare 相关配置（如果存在）
+- kiosk / autologin 相关配置
+
+注意：
+
+- 备份包里可能包含私有密码和 token
+- 只能本地保存，不要提交到 GitHub

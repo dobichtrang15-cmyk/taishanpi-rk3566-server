@@ -28,7 +28,7 @@ sudo apt update
 sudo apt install -y git
 git clone https://github.com/YOUR_GITHUB_NAME/taishanpi-rk3566-server.git
 cd taishanpi-rk3566-server
-sudo ./deploy/install.sh
+sudo bash ./deploy/install.sh
 sudo reboot
 ```
 
@@ -76,7 +76,7 @@ git push
 
 ```bash
 cd ~/taishanpi-rk3566-server
-sudo ./deploy/update.sh
+sudo bash ./deploy/update.sh
 ```
 
 `deploy/update.sh` 会自动执行：
