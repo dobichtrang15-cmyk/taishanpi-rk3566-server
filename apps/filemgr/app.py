@@ -1,19 +1,22 @@
 from functools import wraps
 from pathlib import Path
 import copy
+import ipaddress
 import json
 import mimetypes
+import os
 import re
 import secrets
 import socket
 import subprocess
 import shutil
 import tempfile
+import time
 import urllib.error
 import urllib.request
 from urllib.parse import quote
 
-from flask import Flask, after_this_request, jsonify, request, send_file, session
+from flask import Flask, after_this_request, g, jsonify, request, send_file, session
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
@@ -26,20 +29,25 @@ app = Flask(__name__)
 
 # Restrict file operations to this directory only.
 APP_DIR = Path(__file__).resolve().parent
-ROOT = Path("/userdata/files").resolve()
+ROOT = Path(os.environ.get("FILEMGR_ROOT", "/srv/taishanpi-files")).expanduser().resolve()
 USERS_FILE = APP_DIR / "users.json"
 SECRET_FILE = APP_DIR / "secret.key"
 DEVICES_FILE = APP_DIR / "devices.json"
+TOKENS_FILE = APP_DIR / "tokens.json"
+BOOTSTRAP_CREDENTIALS_FILE = APP_DIR / "bootstrap-admin.txt"
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_.-]{3,32}$")
 MAC_RE = re.compile(r"^[0-9A-Fa-f]{12}$")
-SYNCTHING_SERVICE = "syncthing@lckfb"
-SYNCTHING_GUI_URL = "http://192.168.50.1:8384"
-SYNCTHING_API_URL = "http://127.0.0.1:8384"
-SYNCTHING_FOLDER_ID = "obsidian-vault"
-SYNCTHING_FOLDER_PATH = Path("/userdata/files/obsidian-vault")
+SYNCTHING_USER = os.environ.get("SYNCTHING_USER", "lckfb")
+SYNCTHING_SERVICE = os.environ.get("SYNCTHING_SERVICE", f"syncthing@{SYNCTHING_USER}")
+SYNCTHING_GUI_URL = os.environ.get("SYNCTHING_GUI_URL", "http://192.168.50.1:8384")
+SYNCTHING_API_URL = os.environ.get("SYNCTHING_API_URL", "http://127.0.0.1:8384")
+SYNCTHING_FOLDER_ID = os.environ.get("SYNCTHING_FOLDER_ID", "obsidian-vault")
+SYNCTHING_FOLDER_PATH = Path(
+    os.environ.get("SYNCTHING_FOLDER_PATH", str(ROOT / "obsidian-vault"))
+).expanduser().resolve()
 SYNCTHING_CONFIG_CANDIDATES = [
-    Path("/home/lckfb/.local/state/syncthing/config.xml"),
-    Path("/home/lckfb/.config/syncthing/config.xml"),
+    Path(f"/home/{SYNCTHING_USER}/.local/state/syncthing/config.xml"),
+    Path(f"/home/{SYNCTHING_USER}/.config/syncthing/config.xml"),
 ]
 PERMISSION_PROFILES = {
     "viewer": ["list", "download"],
@@ -57,7 +65,7 @@ DEFAULT_DEVICES = {
         "ssh_user": "",
         "ssh_password": "",
         "ssh_port": 22,
-        "shutdown_command": "shutdown /s /t 0",
+        "shutdown_command": "shutdown /s /f /t 0",
     }
 }
 
@@ -73,6 +81,7 @@ def ensure_secret_key():
 
     secret = secrets.token_hex(32)
     SECRET_FILE.write_text(secret, encoding="utf-8")
+    SECRET_FILE.chmod(0o600)
     app.secret_key = secret
 
 
@@ -80,9 +89,19 @@ def ensure_users():
     if USERS_FILE.exists():
         return
 
+    username = os.environ.get("FILEMGR_BOOTSTRAP_USER", "admin").strip()
+    if not USERNAME_RE.fullmatch(username):
+        raise RuntimeError(
+            "FILEMGR_BOOTSTRAP_USER must contain 3-32 letters, digits, '.', '_' or '-'"
+        )
+    password = os.environ.get("FILEMGR_BOOTSTRAP_PASSWORD", "").strip()
+    generated_password = not password
+    if generated_password:
+        password = secrets.token_urlsafe(18)
+
     default_users = {
-        "admin": {
-            "password_hash": generate_password_hash("112233"),
+        username: {
+            "password_hash": generate_password_hash(password),
             "role": "admin",
             "permissions": PERMISSION_PROFILES["admin"],
         }
@@ -91,6 +110,18 @@ def ensure_users():
         json.dumps(default_users, indent=2, ensure_ascii=True),
         encoding="utf-8",
     )
+    USERS_FILE.chmod(0o600)
+    if generated_password:
+        BOOTSTRAP_CREDENTIALS_FILE.write_text(
+            f"username={username}\npassword={password}\n"
+            "Delete this file after the first successful login and password change.\n",
+            encoding="utf-8",
+        )
+        BOOTSTRAP_CREDENTIALS_FILE.chmod(0o600)
+        print(
+            f"[security] generated bootstrap credentials: {BOOTSTRAP_CREDENTIALS_FILE}",
+            flush=True,
+        )
 
 
 def ensure_devices():
@@ -100,6 +131,14 @@ def ensure_devices():
         json.dumps(DEFAULT_DEVICES, indent=2, ensure_ascii=True),
         encoding="utf-8",
     )
+    DEVICES_FILE.chmod(0o600)
+
+
+def ensure_tokens():
+    if TOKENS_FILE.exists():
+        return
+    TOKENS_FILE.write_text("{}", encoding="utf-8")
+    TOKENS_FILE.chmod(0o600)
 
 
 def load_users():
@@ -130,6 +169,169 @@ def load_users():
     return users
 
 
+def load_tokens():
+    ensure_tokens()
+    try:
+        with TOKENS_FILE.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def save_tokens(tokens):
+    TOKENS_FILE.write_text(
+        json.dumps(tokens, indent=2, ensure_ascii=True),
+        encoding="utf-8",
+    )
+
+
+def create_access_token(username: str, user: dict) -> str:
+    tokens = load_tokens()
+    token = secrets.token_urlsafe(32)
+    tokens[token] = {
+        "username": username,
+        "role": user.get("role", "viewer"),
+        "permissions": user.get("permissions") or PERMISSION_PROFILES[user.get("role", "viewer")],
+        "created_at": int(time.time()),
+        "last_seen": int(time.time()),
+    }
+    save_tokens(tokens)
+    return token
+
+
+def revoke_access_token(token: str):
+    if not token:
+        return
+    tokens = load_tokens()
+    if token in tokens:
+        del tokens[token]
+        save_tokens(tokens)
+
+
+def revoke_user_tokens(username: str):
+    tokens = load_tokens()
+    changed = False
+    for token, info in list(tokens.items()):
+        if info.get("username") == username:
+            del tokens[token]
+            changed = True
+    if changed:
+        save_tokens(tokens)
+
+
+def authorization_token() -> str:
+    auth_header = (request.headers.get("Authorization") or "").strip()
+    if auth_header.lower().startswith("bearer "):
+        return auth_header[7:].strip()
+    return (request.headers.get("X-Auth-Token") or "").strip()
+
+
+def is_loopback_address(value: str) -> bool:
+    try:
+        return ipaddress.ip_address((value or "").strip()).is_loopback
+    except ValueError:
+        return False
+
+
+def header_has_only_loopback_ips(header_value: str) -> bool:
+    if not header_value:
+        return True
+    parts = [part.strip() for part in header_value.split(",") if part.strip()]
+    if not parts:
+        return True
+    return all(is_loopback_address(part) for part in parts)
+
+
+def local_kiosk_identity(users: dict) -> dict:
+    username = next(
+        (name for name, user in users.items() if user.get("role") == "admin"),
+        next(iter(users.keys()), "local-kiosk"),
+    )
+    user = users.get(
+        username,
+        {
+            "role": "admin",
+            "permissions": PERMISSION_PROFILES["admin"],
+        },
+    )
+    return {
+        "authenticated": True,
+        "username": username,
+        "role": user.get("role", "admin"),
+        "permissions": user.get("permissions") or PERMISSION_PROFILES[user.get("role", "admin")],
+        "auth_type": "local-kiosk",
+        "token": None,
+    }
+
+
+def is_local_kiosk_request() -> bool:
+    remote_addr = (request.remote_addr or "").strip()
+    real_ip = (request.headers.get("X-Real-IP") or "").strip()
+    forwarded_for = (request.headers.get("X-Forwarded-For") or "").strip()
+    if not is_loopback_address(remote_addr):
+        return False
+    return header_has_only_loopback_ips(real_ip) and header_has_only_loopback_ips(forwarded_for)
+
+
+def get_request_identity():
+    cached = getattr(g, "_identity", None)
+    if cached is not None:
+        return cached
+
+    users = load_users()
+    if is_local_kiosk_request():
+        g._identity = local_kiosk_identity(users)
+        return g._identity
+    token = authorization_token()
+    if token:
+        tokens = load_tokens()
+        token_data = tokens.get(token)
+        if token_data:
+            username = token_data.get("username")
+            user = users.get(username)
+            if user:
+                token_data["role"] = user.get("role", "viewer")
+                token_data["permissions"] = user.get("permissions") or PERMISSION_PROFILES[token_data["role"]]
+                token_data["last_seen"] = int(time.time())
+                tokens[token] = token_data
+                save_tokens(tokens)
+                identity = {
+                    "authenticated": True,
+                    "username": username,
+                    "role": token_data["role"],
+                    "permissions": token_data["permissions"],
+                    "auth_type": "token",
+                    "token": token,
+                }
+                g._identity = identity
+                return identity
+        g._identity = {"authenticated": False, "username": None, "role": None, "permissions": [], "auth_type": "token", "token": token}
+        return g._identity
+
+    username = session.get("username")
+    if not username:
+        g._identity = {"authenticated": False, "username": None, "role": None, "permissions": [], "auth_type": "session", "token": None}
+        return g._identity
+
+    user = users.get(username)
+    if not user:
+        session.clear()
+        g._identity = {"authenticated": False, "username": None, "role": None, "permissions": [], "auth_type": "session", "token": None}
+        return g._identity
+
+    set_session_user(username, user)
+    identity = {
+        "authenticated": True,
+        "username": username,
+        "role": user.get("role", "viewer"),
+        "permissions": user.get("permissions", []),
+        "auth_type": "session",
+        "token": None,
+    }
+    g._identity = identity
+    return identity
+
+
 def save_users(users):
     USERS_FILE.write_text(
         json.dumps(users, indent=2, ensure_ascii=True),
@@ -155,7 +357,7 @@ def normalize_device(device: dict) -> dict:
         "ssh_user": (device.get("ssh_user") or "").strip(),
         "ssh_password": str(device.get("ssh_password") or ""),
         "ssh_port": int(device.get("ssh_port") or 22),
-        "shutdown_command": (device.get("shutdown_command") or "shutdown /s /t 0").strip(),
+        "shutdown_command": (device.get("shutdown_command") or "shutdown /s /f /t 0").strip(),
     }
 
 
@@ -511,14 +713,16 @@ def set_session_user(username: str, user: dict):
 
 
 def current_permissions():
-    return session.get("permissions") or PERMISSION_PROFILES.get(session.get("role", "viewer"), [])
+    identity = get_request_identity()
+    return identity.get("permissions") or []
 
 
 def permission_required(permission: str):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if not session.get("username"):
+            identity = get_request_identity()
+            if not identity.get("authenticated"):
                 return jsonify({"error": "auth required"}), 401
             if permission not in current_permissions():
                 return jsonify({"error": "permission denied"}), 403
@@ -633,7 +837,8 @@ def send_inline(path: Path):
 def login_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if not session.get("username"):
+        identity = get_request_identity()
+        if not identity.get("authenticated"):
             return jsonify({"error": "auth required"}), 401
         return func(*args, **kwargs)
 
@@ -647,23 +852,16 @@ def handle_value_error(_error):
 
 @app.route("/api/auth/status", methods=["GET"])
 def auth_status():
-    username = session.get("username")
-    if not username:
-        return jsonify({"authenticated": False, "username": None, "role": None, "permissions": []})
-
-    users = load_users()
-    user = users.get(username)
-    if not user:
-        session.clear()
-        return jsonify({"authenticated": False, "username": None, "role": None, "permissions": []})
-
-    set_session_user(username, user)
+    identity = get_request_identity()
+    if not identity.get("authenticated"):
+        return jsonify({"authenticated": False, "username": None, "role": None, "permissions": [], "auth_type": identity.get("auth_type")})
     return jsonify(
         {
             "authenticated": True,
-            "username": username,
-            "role": user.get("role", "viewer"),
-            "permissions": user.get("permissions", []),
+            "username": identity.get("username"),
+            "role": identity.get("role"),
+            "permissions": identity.get("permissions", []),
+            "auth_type": identity.get("auth_type"),
         }
     )
 
@@ -680,18 +878,22 @@ def login():
         return jsonify({"error": "invalid username or password"}), 401
 
     set_session_user(username, user)
+    token = create_access_token(username, user)
     return jsonify(
         {
             "ok": True,
             "username": username,
             "role": user.get("role", "viewer"),
             "permissions": user.get("permissions", []),
+            "token": token,
+            "auth_type": "session+token",
         }
     )
 
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
+    revoke_access_token(authorization_token())
     session.clear()
     return jsonify({"ok": True})
 
@@ -703,9 +905,9 @@ def update_account():
     new_username = (data.get("new_username") or "").strip()
     current_password = data.get("current_password") or ""
     new_password = data.get("new_password") or ""
-    target_username = session.get("username")
-
-    username = session.get("username")
+    identity = get_request_identity()
+    target_username = identity.get("username")
+    username = identity.get("username")
     users = load_users()
     user = users.get(username)
     if not user or not check_password_hash(user["password_hash"], current_password):
@@ -731,12 +933,16 @@ def update_account():
 
     save_users(users)
     set_session_user(target_username, user)
+    revoke_user_tokens(username)
+    token = create_access_token(target_username, user)
     return jsonify(
         {
             "ok": True,
             "username": target_username,
             "role": user.get("role", "viewer"),
             "permissions": user.get("permissions", []),
+            "token": token,
+            "auth_type": "session+token",
         }
     )
 

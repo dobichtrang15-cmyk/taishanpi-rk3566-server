@@ -1,0 +1,124 @@
+<view class="page">
+  <view class="card hero-card">
+    <view class="hero-eyebrow">Syncthing</view>
+    <view class="hero-title">同步管理</view>
+    <view class="hero-subtitle">查看 Syncthing 服务、Obsidian 文件夹状态与最近日志。</view>
+    <view wx:if="{{refreshing}}" class="muted">后台刷新中…</view>
+    <view wx:if="{{error}}" class="status-error">{{error}}</view>
+  </view>
+
+  <view class="card dashboard-panel">
+    <view class="section-title">状态面板</view>
+    <view class="dashboard-grid">
+      <view class="dashboard-card {{status && status.running ? 'dashboard-card-ok' : 'dashboard-card-warn'}}">
+        <view class="dashboard-top">
+          <view class="dashboard-label">服务状态</view>
+          <view class="dashboard-badge {{status && status.running ? 'dashboard-badge-ok' : 'dashboard-badge-warn'}}">
+            {{status && status.running ? "运行中" : "未运行"}}
+          </view>
+        </view>
+        <view class="dashboard-meter">
+          <view class="dashboard-ring {{status && status.running ? 'dashboard-ring-ok' : 'dashboard-ring-warn'}}"></view>
+          <view>
+            <view class="dashboard-reading">{{status && status.running ? "READY" : "STOP"}}</view>
+            <view class="dashboard-reading-note">Syncthing 服务状态</view>
+          </view>
+        </view>
+        <view class="dashboard-desc">{{status && status.message ? status.message : "尚未检测"}}</view>
+      </view>
+
+      <view class="dashboard-card dashboard-card-info">
+        <view class="dashboard-top">
+          <view class="dashboard-label">同步文件夹</view>
+          <view class="dashboard-badge dashboard-badge-info">Folder</view>
+        </view>
+        <view class="dashboard-meter dashboard-meter-stack">
+          <view class="dashboard-reading">{{folder && folder.state ? folder.state : "未知"}}</view>
+          <view class="dashboard-reading-note">Obsidian 目标目录状态</view>
+        </view>
+        <view class="dashboard-desc">当前监控的主同步目录状态信息。</view>
+      </view>
+
+      <view class="dashboard-card dashboard-card-info">
+        <view class="dashboard-top">
+          <view class="dashboard-label">连接设备</view>
+          <view class="dashboard-badge dashboard-badge-info">Peers</view>
+        </view>
+        <view class="dashboard-meter dashboard-meter-stack">
+          <view class="dashboard-reading">{{devices.length}}</view>
+          <view class="dashboard-reading-note">已发现的远端同步节点</view>
+        </view>
+        <view class="dashboard-desc">包括桌面端、开发板或其他已配对设备。</view>
+      </view>
+
+      <view class="dashboard-card {{conflicts.length ? 'dashboard-card-warn' : 'dashboard-card-ok'}}">
+        <view class="dashboard-top">
+          <view class="dashboard-label">冲突文件</view>
+          <view class="dashboard-badge {{conflicts.length ? 'dashboard-badge-warn' : 'dashboard-badge-ok'}}">
+            {{conflicts.length ? "注意" : "正常"}}
+          </view>
+        </view>
+        <view class="dashboard-meter dashboard-meter-stack">
+          <view class="dashboard-reading">{{conflicts.length}}</view>
+          <view class="dashboard-reading-note">当前检测到的冲突数量</view>
+        </view>
+        <view class="dashboard-desc">有冲突时建议回网页端进一步处理。</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">功能组件</view>
+    <view class="component-grid">
+      <view class="component-card" bindtap="refreshSync">
+        <view class="component-head">
+          <view class="component-title">刷新状态</view>
+          <view class="component-tag">Refresh</view>
+        </view>
+        <view class="component-desc">静默刷新 Syncthing 服务和文件夹状态。</view>
+        <view class="component-foot">{{loading || refreshing ? "刷新中" : "点击刷新"}}</view>
+      </view>
+
+      <view class="component-card component-card-primary" data-action="start" bindtap="control">
+        <view class="component-head">
+          <view class="component-title">启动服务</view>
+          <view class="component-tag">Start</view>
+        </view>
+        <view class="component-desc">启动 Syncthing 服务进程。</view>
+        <view class="component-foot">立即执行</view>
+      </view>
+
+      <view class="component-card" data-action="restart" bindtap="control">
+        <view class="component-head">
+          <view class="component-title">重启服务</view>
+          <view class="component-tag">Restart</view>
+        </view>
+        <view class="component-desc">重新加载 Syncthing 配置和连接。</view>
+        <view class="component-foot">推荐排障时使用</view>
+      </view>
+
+      <view class="component-card" data-action="stop" bindtap="control">
+        <view class="component-head">
+          <view class="component-title">停止服务</view>
+          <view class="component-tag component-tag-danger">Stop</view>
+        </view>
+        <view class="component-desc">停止 Syncthing 运行，会中断当前同步。</view>
+        <view class="component-foot">危险操作</view>
+      </view>
+
+      <view class="component-card" bindtap="loadLogs">
+        <view class="component-head">
+          <view class="component-title">读取日志</view>
+          <view class="component-tag">Logs</view>
+        </view>
+        <view class="component-desc">加载最近运行日志，便于定位同步异常。</view>
+        <view class="component-foot">文本输出</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">日志控制台</view>
+    <textarea class="textarea mono" value="{{logs}}" disabled placeholder="点击上方“读取日志”组件后显示 Syncthing 最近日志" />
+  </view>
+</view>

@@ -1,0 +1,16 @@
+{
+  "name": "taishanpi-matter-workstation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node src/index.mjs",
+    "check": "node --check src/index.mjs"
+  },
+  "dependencies": {
+    "@matter/main": "0.17.3"
+  }
+}

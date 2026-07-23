@@ -8,18 +8,26 @@ data/
 *.crt
 *.token
 *.log
+*.tmp
 .env
 
 # Real runtime configs; keep examples instead
 apps/filemgr/devices.json
 apps/filemgr/users.json
+apps/filemgr/tokens.json
+apps/filemgr/secret.key
+apps/filemgr/bootstrap-admin.txt
 cloudflared/
+miniapp/project.private.config.json
+apps/project.private.config.json
+release/
 
 # Python
 __pycache__/
 *.pyc
 .venv/
 venv/
+node_modules/
 
 # OS/editor
 .DS_Store

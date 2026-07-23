@@ -1,0 +1,145 @@
+<view class="page">
+  <view class="card hero-card">
+    <view class="hero-eyebrow">Device</view>
+    <view class="hero-title">设备控制</view>
+    <view class="hero-subtitle">管理 Windows 目标机的唤醒、关机和 SSH 配置。</view>
+    <view wx:if="{{refreshing}}" class="muted">后台刷新中…</view>
+    <view wx:if="{{error}}" class="status-error">{{error}}</view>
+  </view>
+
+  <view class="card dashboard-panel">
+    <view class="section-title">状态面板</view>
+    <view class="dashboard-grid">
+      <view class="dashboard-card {{status && status.online ? 'dashboard-card-ok' : 'dashboard-card-warn'}}">
+        <view class="dashboard-top">
+          <view class="dashboard-label">主机在线</view>
+          <view class="dashboard-badge {{status && status.online ? 'dashboard-badge-ok' : 'dashboard-badge-warn'}}">
+            {{status && status.online ? "在线" : "离线"}}
+          </view>
+        </view>
+        <view class="dashboard-meter">
+          <view class="dashboard-ring {{status && status.online ? 'dashboard-ring-ok' : 'dashboard-ring-warn'}}"></view>
+          <view>
+            <view class="dashboard-reading">{{status && status.online ? "100%" : "0%"}}</view>
+            <view class="dashboard-reading-note">Windows 响应状态</view>
+          </view>
+        </view>
+        <view class="dashboard-desc">{{status && status.message ? status.message : "尚未检测"}}</view>
+      </view>
+
+      <view class="dashboard-card dashboard-card-info">
+        <view class="dashboard-top">
+          <view class="dashboard-label">目标地址</view>
+          <view class="dashboard-badge dashboard-badge-info">Host</view>
+        </view>
+        <view class="dashboard-meter dashboard-meter-stack">
+          <view class="dashboard-reading mono">{{device.host || "-"}}</view>
+          <view class="dashboard-reading-note">当前 Windows 主机地址</view>
+        </view>
+        <view class="dashboard-desc">小程序与网页端都会通过这台主机执行检测和关机。</view>
+      </view>
+
+      <view class="dashboard-card dashboard-card-info">
+        <view class="dashboard-top">
+          <view class="dashboard-label">SSH 账号</view>
+          <view class="dashboard-badge dashboard-badge-info">SSH</view>
+        </view>
+        <view class="dashboard-meter dashboard-meter-stack">
+          <view class="dashboard-reading">{{device.ssh_user || "-"}}</view>
+          <view class="dashboard-reading-note">端口 {{device.ssh_port || 22}}</view>
+        </view>
+        <view class="dashboard-desc">用于执行 Windows 远程关机命令的凭据。</view>
+      </view>
+
+      <view class="dashboard-card dashboard-card-info">
+        <view class="dashboard-top">
+          <view class="dashboard-label">唤醒目标</view>
+          <view class="dashboard-badge dashboard-badge-info">WOL</view>
+        </view>
+        <view class="dashboard-meter dashboard-meter-stack">
+          <view class="dashboard-reading mono">{{device.mac || "-"}}</view>
+          <view class="dashboard-reading-note mono">{{device.broadcast || "255.255.255.255"}}</view>
+        </view>
+        <view class="dashboard-desc">MAC 地址与广播地址用于网络唤醒。</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">功能组件</view>
+    <view class="component-grid">
+      <view class="component-card" bindtap="refreshStatus">
+        <view class="component-head">
+          <view class="component-title">检测在线</view>
+          <view class="component-tag">Ping</view>
+        </view>
+        <view class="component-desc">重新检查 Windows 主机当前是否可达。</view>
+        <view class="component-foot">更新状态</view>
+      </view>
+
+      <view class="component-card component-card-primary" bindtap="wake">
+        <view class="component-head">
+          <view class="component-title">网络唤醒</view>
+          <view class="component-tag">WOL</view>
+        </view>
+        <view class="component-desc">通过 MAC 地址和广播地址发送唤醒包。</view>
+        <view class="component-foot">快速开机</view>
+      </view>
+
+      <view class="component-card" bindtap="shutdown">
+        <view class="component-head">
+          <view class="component-title">远程关机</view>
+          <view class="component-tag component-tag-danger">SSH</view>
+        </view>
+        <view class="component-desc">通过 SSH 登录 Windows 并执行关机命令。</view>
+        <view class="component-foot">危险操作</view>
+      </view>
+
+      <view class="component-card" bindtap="refreshDevice">
+        <view class="component-head">
+          <view class="component-title">重新载入配置</view>
+          <view class="component-tag">Reload</view>
+        </view>
+        <view class="component-desc">静默刷新当前设备配置，不重置页面结构。</view>
+        <view class="component-foot">{{loading || refreshing ? "刷新中" : "点击刷新"}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">配置面板</view>
+    <view class="field">
+      <text class="field-label">设备名称</text>
+      <input class="input" value="{{device.name}}" data-key="name" bindinput="bindField" placeholder="例如 JJ 的电脑" />
+    </view>
+    <view class="field">
+      <text class="field-label">主机地址</text>
+      <input class="input mono" value="{{device.host}}" data-key="host" bindinput="bindField" placeholder="192.168.50.2" />
+    </view>
+    <view class="field">
+      <text class="field-label">MAC 地址</text>
+      <input class="input mono" value="{{device.mac}}" data-key="mac" bindinput="bindField" placeholder="AA:BB:CC:DD:EE:FF" />
+    </view>
+    <view class="field">
+      <text class="field-label">广播地址</text>
+      <input class="input mono" value="{{device.broadcast}}" data-key="broadcast" bindinput="bindField" placeholder="255.255.255.255" />
+    </view>
+    <view class="field">
+      <text class="field-label">SSH 用户名</text>
+      <input class="input" value="{{device.ssh_user}}" data-key="ssh_user" bindinput="bindField" placeholder="woladmin" />
+    </view>
+    <view class="field">
+      <text class="field-label">SSH 密码</text>
+      <input class="input" password value="{{device.ssh_password}}" data-key="ssh_password" bindinput="bindField" placeholder="输入 Windows 账户密码" />
+    </view>
+    <view class="field">
+      <text class="field-label">SSH 端口</text>
+      <input class="input mono" type="number" value="{{device.ssh_port}}" data-key="ssh_port" bindinput="bindField" placeholder="22" />
+    </view>
+    <view class="field">
+      <text class="field-label">关机命令</text>
+      <input class="input mono" value="{{device.shutdown_command}}" data-key="shutdown_command" bindinput="bindField" placeholder="shutdown /s /f /t 0" />
+    </view>
+    <button class="primary" bindtap="save">保存配置</button>
+  </view>
+</view>

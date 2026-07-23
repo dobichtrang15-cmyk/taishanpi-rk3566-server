@@ -2,6 +2,7 @@
 set -euo pipefail
 
 BACKUP_ROOT="${BACKUP_ROOT:-/userdata/backup}"
+RUNTIME_ROOT="${TAISHANPI_RUNTIME_ROOT:-/opt/taishanpi-server}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 NAME="taishanpi-config-backup-${STAMP}"
 WORK_DIR="$(mktemp -d)"
@@ -29,11 +30,18 @@ copy_path() {
 
 echo "Collecting private configuration files..."
 
-copy_path /userdata/server/apps/filemgr/users.json
-copy_path /userdata/server/apps/filemgr/devices.json
+copy_path "$RUNTIME_ROOT/apps/filemgr/users.json"
+copy_path "$RUNTIME_ROOT/apps/filemgr/devices.json"
+copy_path "$RUNTIME_ROOT/apps/filemgr/tokens.json"
+copy_path "$RUNTIME_ROOT/apps/filemgr/secret.key"
+copy_path /var/lib/matter-workstation
+copy_path /etc/default/filemgr
+copy_path /etc/default/matter-workstation
+copy_path /etc/default/eth0-direct
 copy_path /etc/nginx/sites-available/default
 copy_path /etc/systemd/system/filemgr.service
 copy_path /etc/systemd/system/eth0-direct.service
+copy_path /etc/systemd/system/matter-workstation.service
 copy_path /etc/sudoers.d/filemgr-syncthing
 copy_path /etc/dashboard-kiosk.conf
 copy_path /etc/lightdm/lightdm.conf.d/50-dashboard-autologin.conf
@@ -50,6 +58,7 @@ created_at=$(date -Is)
 hostname=$(hostname)
 kernel=$(uname -r)
 user_data_root=/userdata
+runtime_root=$RUNTIME_ROOT
 notes=Contains private runtime configuration. Do not commit this archive to GitHub.
 EOF
 
@@ -62,7 +71,7 @@ EOF
   ip route || true
   echo
   echo "==== systemctl enabled ===="
-  systemctl is-enabled nginx filemgr eth0-direct ssh 2>/dev/null || true
+  systemctl is-enabled nginx filemgr eth0-direct matter-workstation ssh 2>/dev/null || true
   echo
   echo "==== systemctl enabled (optional) ===="
   systemctl is-enabled cloudflared syncthing@lckfb 2>/dev/null || true

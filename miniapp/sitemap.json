@@ -1,0 +1,9 @@
+{
+  "desc": "JJ server miniapp sitemap",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

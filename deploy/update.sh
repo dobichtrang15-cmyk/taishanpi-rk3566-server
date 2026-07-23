@@ -23,8 +23,10 @@ echo "Restarting services..."
 systemctl restart nginx
 systemctl restart filemgr 2>/dev/null || true
 systemctl restart eth0-direct 2>/dev/null || true
+systemctl restart matter-workstation 2>/dev/null || true
 
 echo "Update complete."
 echo "Check status with:"
 echo "  sudo systemctl status nginx --no-pager"
 echo "  sudo systemctl status filemgr --no-pager"
+echo "  sudo systemctl status matter-workstation --no-pager"

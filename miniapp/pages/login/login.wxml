@@ -1,0 +1,43 @@
+<view class="page login-page">
+  <view class="login-shell">
+    <view class="login-hero">
+      <view class="login-badge">JJ Server</view>
+      <view class="login-title">登录服务器控制台</view>
+      <view class="login-subtitle">访问开发板文件、同步状态和设备控制能力</view>
+    </view>
+
+    <view class="login-panel">
+      <view class="login-panel-title">账号登录</view>
+
+      <view class="login-group">
+        <text class="login-label">用户名</text>
+        <input
+          class="login-input"
+          value="{{username}}"
+          bindinput="onUsernameInput"
+          placeholder="请输入用户名"
+          placeholder-class="login-placeholder"
+        />
+      </view>
+
+      <view class="login-group">
+        <text class="login-label">密码</text>
+        <input
+          class="login-input"
+          password
+          value="{{password}}"
+          bindinput="onPasswordInput"
+          placeholder="请输入密码"
+          placeholder-class="login-placeholder"
+        />
+      </view>
+
+      <button class="login-submit" loading="{{loading}}" bindtap="submit">登录</button>
+      <view wx:if="{{error}}" class="status-error login-error">{{error}}</view>
+    </view>
+
+    <view class="login-tip">
+      当前版本先复用现有 Flask 后端账号体系，后续再切独立 Token。
+    </view>
+  </view>
+</view>

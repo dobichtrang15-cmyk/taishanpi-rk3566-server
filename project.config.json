@@ -1,0 +1,15 @@
+{
+  "appid": "touristappid",
+  "projectname": "jj-server-miniapp",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "miniapp/",
+  "srcMiniprogramRoot": "miniapp/",
+  "libVersion": "trial",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": false,
+    "urlCheck": false
+  }
+}

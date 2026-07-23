@@ -74,6 +74,7 @@ sudo systemctl status nginx --no-pager
 sudo systemctl status filemgr --no-pager
 sudo systemctl status eth0-direct --no-pager
 sudo systemctl status ssh --no-pager
+sudo systemctl status matter-workstation --no-pager
 ```
 
 本机测试：
@@ -84,30 +85,25 @@ curl -I http://127.0.0.1
 
 ## 4. 初始化真实用户配置
 
-仓库里只带示例文件，不带真实用户。
-
-首次部署后如果还没有真实配置，可从示例复制：
+仓库里只带示例文件，不带真实用户。首次启动 `filemgr` 时会自动生成随机管理员密码：
 
 ```bash
-cd /userdata/server/apps/filemgr
-sudo cp -n users.example.json users.json
-sudo cp -n devices.example.json devices.json
-sudo chown lckfb:lckfb users.json devices.json
-sudo chmod 600 users.json devices.json
+sudo cat /opt/taishanpi-server/apps/filemgr/bootstrap-admin.txt
 ```
 
-然后按你的实际账号需求修改：
+使用显示的账号密码登录网页，立即修改密码，然后删除一次性凭据：
 
 ```bash
-sudo nano /userdata/server/apps/filemgr/users.json
-sudo nano /userdata/server/apps/filemgr/devices.json
+sudo rm /opt/taishanpi-server/apps/filemgr/bootstrap-admin.txt
 ```
 
-修改后重启：
+如果需要指定首次密码，在第一次启动前编辑：
 
 ```bash
-sudo systemctl restart filemgr
+sudo nano /etc/default/filemgr
 ```
+
+设置 `FILEMGR_BOOTSTRAP_PASSWORD`。已有 `users.json` 时不会覆盖原账号。
 
 ## 5. 配置服务器网页管理员账号
 
@@ -209,6 +205,7 @@ sudo journalctl -u cloudflared -n 50 --no-pager
 
 - 域名通常不用换
 - 只要 tunnel token 对、开发板能联网，原域名可继续使用
+- Cloudflare Tunnel 只提供 HTTPS 远程入口，不能替代 HomePod/Apple TV 的苹果家庭中枢
 
 ## 9. 配置 Syncthing
 
@@ -264,7 +261,9 @@ sudo systemctl status nginx --no-pager
 sudo systemctl status filemgr --no-pager
 sudo systemctl status cloudflared --no-pager
 sudo systemctl status syncthing@lckfb --no-pager
+sudo systemctl status matter-workstation --no-pager
 curl -I http://127.0.0.1
+curl -fsS http://127.0.0.1:5000/api/device/workstation/status
 ```
 
 网页验证：
@@ -281,6 +280,9 @@ curl -I http://127.0.0.1
 ```text
 /userdata/server/apps/filemgr/users.json
 /userdata/server/apps/filemgr/devices.json
+/userdata/server/apps/filemgr/tokens.json
+/userdata/server/apps/filemgr/secret.key
+/var/lib/matter-workstation
 /etc/sudoers.d/filemgr-syncthing
 Cloudflare tunnel token
 真实 SSH 密码
@@ -320,12 +322,14 @@ sudo bash ./deploy/update.sh
 - 重启 `nginx`
 - 重启 `filemgr`
 - 重启 `eth0-direct`
+- 重启 `matter-workstation`
 
 更新后建议检查：
 
 ```bash
 sudo systemctl status nginx --no-pager
 sudo systemctl status filemgr --no-pager
+sudo systemctl status matter-workstation --no-pager
 ```
 
 ## 15. 备份当前板子的私有配置

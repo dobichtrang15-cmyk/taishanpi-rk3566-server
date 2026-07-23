@@ -1,0 +1,24 @@
+[Unit]
+Description=TaishanPi Matter Workstation Power Bridge
+After=network-online.target filemgr.service
+Wants=network-online.target
+Requires=filemgr.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/taishanpi-server/apps/matter-workstation
+EnvironmentFile=-/etc/default/matter-workstation
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/bin/env node /opt/taishanpi-server/apps/matter-workstation/src/index.mjs --storage-path=/var/lib/matter-workstation
+Restart=always
+RestartSec=5
+User=matter-workstation
+Group=matter-workstation
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/matter-workstation
+
+[Install]
+WantedBy=multi-user.target

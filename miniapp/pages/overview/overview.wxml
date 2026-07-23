@@ -1,0 +1,140 @@
+<view class="page">
+  <view class="card hero-card">
+    <view class="hero-eyebrow">JJ Console</view>
+    <view class="hero-title">服务器总览</view>
+    <view class="hero-subtitle">
+      当前账号：{{user.username || "未登录"}}{{user.role ? (" · " + user.role) : ""}}
+    </view>
+    <view wx:if="{{refreshing}}" class="muted">后台刷新中…</view>
+    <view wx:if="{{error}}" class="status-error">{{error}}</view>
+  </view>
+
+  <view class="card dashboard-panel">
+    <view class="section-title">状态面板</view>
+    <view class="dashboard-grid">
+      <view class="dashboard-card {{deviceStatus && deviceStatus.online ? 'dashboard-card-ok' : 'dashboard-card-warn'}}">
+        <view class="dashboard-top">
+          <view class="dashboard-label">Windows</view>
+          <view class="dashboard-badge {{deviceStatus && deviceStatus.online ? 'dashboard-badge-ok' : 'dashboard-badge-warn'}}">
+            {{deviceStatus && deviceStatus.online ? "在线" : "离线"}}
+          </view>
+        </view>
+        <view class="dashboard-meter">
+          <view class="dashboard-ring {{deviceStatus && deviceStatus.online ? 'dashboard-ring-ok' : 'dashboard-ring-warn'}}"></view>
+          <view>
+            <view class="dashboard-reading">{{deviceStatus && deviceStatus.online ? "100%" : "0%"}}</view>
+            <view class="dashboard-reading-note">目标主机状态</view>
+          </view>
+        </view>
+        <view class="dashboard-desc">{{deviceStatus && deviceStatus.message ? deviceStatus.message : "尚未检测"}}</view>
+      </view>
+
+      <view class="dashboard-card {{syncStatus && syncStatus.running ? 'dashboard-card-ok' : 'dashboard-card-warn'}}">
+        <view class="dashboard-top">
+          <view class="dashboard-label">Syncthing</view>
+          <view class="dashboard-badge {{syncStatus && syncStatus.running ? 'dashboard-badge-ok' : 'dashboard-badge-warn'}}">
+            {{syncStatus && syncStatus.running ? "运行中" : "未运行"}}
+          </view>
+        </view>
+        <view class="dashboard-meter">
+          <view class="dashboard-ring {{syncStatus && syncStatus.running ? 'dashboard-ring-ok' : 'dashboard-ring-warn'}}"></view>
+          <view>
+            <view class="dashboard-reading">{{syncStatus && syncStatus.running ? "READY" : "STOP"}}</view>
+            <view class="dashboard-reading-note">同步服务状态</view>
+          </view>
+        </view>
+        <view class="dashboard-desc">{{syncStatus && syncStatus.message ? syncStatus.message : "尚未检测"}}</view>
+      </view>
+
+      <view class="dashboard-card dashboard-card-info">
+        <view class="dashboard-top">
+          <view class="dashboard-label">根目录</view>
+          <view class="dashboard-badge dashboard-badge-info">Files</view>
+        </view>
+        <view class="dashboard-meter dashboard-meter-stack">
+          <view class="dashboard-reading">{{filesSummary ? filesSummary.count : 0}}</view>
+          <view class="dashboard-reading-note mono">{{filesSummary ? filesSummary.current : "/"}}</view>
+        </view>
+        <view class="dashboard-desc">根目录当前可见项目数量。</view>
+      </view>
+
+      <view class="dashboard-card dashboard-card-info">
+        <view class="dashboard-top">
+          <view class="dashboard-label">/userdata</view>
+          <view class="dashboard-badge dashboard-badge-info">Storage</view>
+        </view>
+        <view class="dashboard-meter dashboard-meter-stack">
+          <view class="dashboard-reading">USED</view>
+          <view class="dashboard-reading-note mono">{{storageSummary}}</view>
+        </view>
+        <view class="dashboard-desc">开发板数据分区当前占用情况。</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">功能组件</view>
+    <view class="component-grid">
+      <view class="component-card component-card-primary" bindtap="wake">
+        <view class="component-head">
+          <view class="component-title">唤醒电脑</view>
+          <view class="component-tag">WOL</view>
+        </view>
+        <view class="component-desc">通过开发板向 Windows 发送网络唤醒包。</view>
+        <view class="component-foot">立即执行</view>
+      </view>
+
+      <view class="component-card" bindtap="shutdown">
+        <view class="component-head">
+          <view class="component-title">远程关机</view>
+          <view class="component-tag component-tag-danger">SSH</view>
+        </view>
+        <view class="component-desc">通过开发板执行 Windows 关机命令。</view>
+        <view class="component-foot">危险操作</view>
+      </view>
+
+      <view class="component-card" bindtap="goFiles">
+        <view class="component-head">
+          <view class="component-title">文件管理</view>
+          <view class="component-tag">Files</view>
+        </view>
+        <view class="component-desc">浏览目录、上传文件、下载文件与删除项目。</view>
+        <view class="component-foot">进入文件页</view>
+      </view>
+
+      <view class="component-card" bindtap="goSync">
+        <view class="component-head">
+          <view class="component-title">同步管理</view>
+          <view class="component-tag">Sync</view>
+        </view>
+        <view class="component-desc">查看 Syncthing 状态、日志和连接设备。</view>
+        <view class="component-foot">进入同步页</view>
+      </view>
+
+      <view class="component-card" bindtap="goDevice">
+        <view class="component-head">
+          <view class="component-title">设备配置</view>
+          <view class="component-tag">Device</view>
+        </view>
+        <view class="component-desc">维护主机地址、MAC、SSH 账号和关机命令。</view>
+        <view class="component-foot">进入设备页</view>
+      </view>
+
+      <view class="component-card" bindtap="refreshAll">
+        <view class="component-head">
+          <view class="component-title">刷新概览</view>
+          <view class="component-tag">Refresh</view>
+        </view>
+        <view class="component-desc">静默刷新当前状态，不重置页面内容。</view>
+        <view class="component-foot">{{loading || refreshing ? "刷新中" : "点击刷新"}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">会话</view>
+    <view class="toolbar-row">
+      <button class="soft-button" bindtap="logout">退出登录</button>
+    </view>
+  </view>
+</view>

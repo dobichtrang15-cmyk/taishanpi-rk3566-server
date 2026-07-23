@@ -1,0 +1,97 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@matter/main':
+        specifier: 0.17.3
+        version: 0.17.3
+
+packages:
+
+  '@matter/general@0.17.3':
+    resolution: {integrity: sha512-5DRM/sA+4gQj/p0cBOBPSXcLjCQ3Qix9rCE23sGGonVWY4PMi+SWzZHvQVe5mYvCl+HU3pL+aJq8HalyOqjEGQ==}
+
+  '@matter/main@0.17.3':
+    resolution: {integrity: sha512-0JE1qtN7ne0P3rCCSWP2pFONFRlOpZvV+BmTyl4YFJtWapIcTUzak9gZ4/WJ0VAUQX4GtbnIAinwyLoysWewIA==}
+
+  '@matter/model@0.17.3':
+    resolution: {integrity: sha512-WfUCmoy71BAOumExCxpgQp2OjfzSEcQtUkft1WkVF1yOToju/0CAhMg0hoqB+XPoEDEwmARgi/AIhgoiJOhGng==}
+
+  '@matter/node@0.17.3':
+    resolution: {integrity: sha512-d6SGETjsE/z9NGPove39eu6WI6qA4svp1IQ/W45+iCWhKidaMu58DX7EZpNCOjWsTfXdjgQA8WnD9K1Ujbuzfg==}
+
+  '@matter/nodejs@0.17.3':
+    resolution: {integrity: sha512-lrhK12Uk5W7WmboF6JE9UV68sj0E2hiYJvpIuZTCnKFmvHs0AwF080eZAIOXcIfsf3Gg6rHHzq5FpR7Zvqiflg==}
+    engines: {node: '>=20.19.0 <22.0.0 || >=22.13.0'}
+
+  '@matter/protocol@0.17.3':
+    resolution: {integrity: sha512-Sf8O2IUhqzKqKR4ssY8epF+aSCrszUiTBkSJ5u/fYDaoADjxIPHFOKXdYcjKrfuydyxhzYDK6eh3XPzyXrir3w==}
+
+  '@matter/types@0.17.3':
+    resolution: {integrity: sha512-7I49NkCAnsytxoFm6mwgpBTgwnODPxpJBkWQfzrWRRW6KBY0syJj+LkI7CIPK37VCc7AAzGrWIRHN7wylKaPeg==}
+
+  '@noble/curves@2.2.0':
+    resolution: {integrity: sha512-T/BoHgFXirb0ENSPBquzX0rcjXeM6Lo892a2jlYJkqk83LqZx0l1Of7DzlKJ6jkpvMrkHSnAcgb5JegL8SeIkQ==}
+    engines: {node: '>= 20.19.0'}
+
+  '@noble/hashes@2.2.0':
+    resolution: {integrity: sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==}
+    engines: {node: '>= 20.19.0'}
+
+snapshots:
+
+  '@matter/general@0.17.3':
+    dependencies:
+      '@noble/curves': 2.2.0
+
+  '@matter/main@0.17.3':
+    dependencies:
+      '@matter/general': 0.17.3
+      '@matter/model': 0.17.3
+      '@matter/node': 0.17.3
+      '@matter/protocol': 0.17.3
+      '@matter/types': 0.17.3
+    optionalDependencies:
+      '@matter/nodejs': 0.17.3
+
+  '@matter/model@0.17.3':
+    dependencies:
+      '@matter/general': 0.17.3
+
+  '@matter/node@0.17.3':
+    dependencies:
+      '@matter/general': 0.17.3
+      '@matter/model': 0.17.3
+      '@matter/protocol': 0.17.3
+      '@matter/types': 0.17.3
+
+  '@matter/nodejs@0.17.3':
+    dependencies:
+      '@matter/general': 0.17.3
+      '@matter/node': 0.17.3
+      '@matter/protocol': 0.17.3
+      '@matter/types': 0.17.3
+    optional: true
+
+  '@matter/protocol@0.17.3':
+    dependencies:
+      '@matter/general': 0.17.3
+      '@matter/model': 0.17.3
+      '@matter/types': 0.17.3
+
+  '@matter/types@0.17.3':
+    dependencies:
+      '@matter/general': 0.17.3
+      '@matter/model': 0.17.3
+
+  '@noble/curves@2.2.0':
+    dependencies:
+      '@noble/hashes': 2.2.0
+
+  '@noble/hashes@2.2.0': {}
